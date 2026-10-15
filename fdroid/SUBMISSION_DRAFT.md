@@ -59,10 +59,55 @@ gates. Tag detection also found the correct version, code and source revision.
 
 ## Merge request and pipeline
 
-- [ ] Public fdroiddata fork, dedicated unprotected app branch, one-app diff.
-- [ ] Fork pipeline checked and any reports resolved or explained.
+Submitted on 2026-10-15 using the current App inclusion template:
+[fdroiddata MR !52669](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/52669).
+The MR is open; maintainer review, merge and official publication are pending.
+The submitted MR description is the authoritative template/checklist record.
 
-Replace the branch item with the actual fork details and report its pipeline
-status before submission. If GitLab restricts personal runner access, leave
-the pipeline checkbox open, explain the restriction and request F-Droid's
-FOSS runner in the MR; do not provide payment details to enable CI.
+- [x] Public [fdroiddata fork](https://gitlab.com/twkevinzhang/fdroiddata), dedicated
+  unprotected [app branch](https://gitlab.com/twkevinzhang/fdroiddata/-/tree/com.twkevinzhang.smsforwarder),
+  one-app diff containing only `metadata/com.twkevinzhang.smsforwarder.yml`.
+- Commit: `e199ad8d0252c435709f552b59b87a31a22d369a`.
+- [x] [Fork push pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2950886308)
+  passed all nine jobs in 409 seconds.
+- [x] [Automatic MR pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2950920367)
+  passed all nine jobs in 406 seconds.
+- [x] MR Reports tab reviewed after the MR pipeline: nine findings explained
+  below. Its initial “No pipeline results yet” state was superseded by the report.
+
+The MR explains warnings from the shared CI environment: initial cache misses,
+root-level Gradle cache paths, Debian package/manual-page cleanup, Python escape
+sequences, pip-as-root and inherited `config.yml` permissions. Gradle also retained
+the packaged AndroidX native library when stripping was unavailable. These did not
+fail the push pipeline. No payment or paid runner capacity was requested.
+
+The fork was initially created under `neslxzhen`; GitLab project ID `87671295`
+now reports the canonical namespace `twkevinzhang/fdroiddata` (same project and
+user ID `5571694`). Current links above use the canonical namespace.
+
+## Reports review
+
+The MR Reports tab showed four minor and five informational findings. These are
+reviewed observations, not an assertion that F-Droid has accepted the app.
+
+- Minor: `RECEIVE_SMS`, `SEND_SMS` and `READ_PHONE_STATE` are the three declared
+  runtime permissions needed to receive new SMS, forward/test-send SMS and query
+  active subscriptions for explicit dual-SIM selection. They are declared in
+  `app/src/main/AndroidManifest.xml` and checked by `TelephonyGateway` before use.
+- Minor: no R8 marker is expected because `isMinifyEnabled = false`. Release
+  shrinking is intentionally disabled pending its own device regression, as
+  documented in the release guide's ProGuard / R8 section.
+- Informational: `com.twkevinzhang.smsforwarder.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`
+  is a signature-level permission merged automatically from AndroidX Core. The
+  local release manifest-merger report confirms its dependency origin; it is not
+  an additional dangerous runtime permission.
+- Informational: the ABI/size summary lists arm64-v8a, armeabi-v7a, x86 and x86_64
+  at approximately 8.0 MB each, with an 8.5 MB universal APK. The APK is small and
+  an ABI split offers limited savings, so no split is requested.
+- Informational: en-US and zh-TW listing text, screenshots and icons were detected.
+- Informational: the CI-signed APK artifact link is for CI verification. It is not
+  the official F-Droid production signing or evidence of repository publication.
+
+The ABI summary and two localized metadata entries account for the five
+informational findings together with the receiver permission and artifact link.
+No app code or release settings were changed to suppress these reports.

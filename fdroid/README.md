@@ -14,8 +14,22 @@ asset digest are recorded in `.github/store-listing-approval.json`.
 See `DEPENDENCY_REVIEW.md` for the dependency inventory and local scanner
 results. Version `v1.0.0` is released on GitHub, and its recipe passed the
 official F-Droid container build and binary scan. See `BUILD_VERIFICATION.md`
-for exact revisions, workflow links and the APK checksum. Initial official
-repository inclusion is still pending; a passing build does not imply acceptance.
+for exact revisions, workflow links and the APK checksum. The initial inclusion
+request was submitted on 2026-10-15 as
+[fdroiddata MR !52669](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/52669).
+It remains open, awaiting maintainer review and official publication.
+
+The public [fork](https://gitlab.com/twkevinzhang/fdroiddata) uses the unprotected
+`com.twkevinzhang.smsforwarder` branch. Commit
+`e199ad8d0252c435709f552b59b87a31a22d369a` adds only the app metadata YAML.
+The [push pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2950886308)
+passed all nine jobs in 409 seconds. The automatically started
+[MR pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2950920367)
+passed all nine jobs in 406 seconds. The MR Reports tab was then reviewed: its
+nine findings (four minor, five informational) are explained in
+[the submission record](SUBMISSION_DRAFT.md#reports-review). CI environment
+warnings are also explained in the MR.
+Passing CI does not imply acceptance, signing or publication.
 
 ## CI and tag releases
 

@@ -43,4 +43,4 @@ Android 原生 app，適用雙卡手機。指定接收 SIM、發送 SIM 與目�
 
 ## 發布
 
-正式 application ID 為 `com.twkevinzhang.smsforwarder`。[v1.0.0 原始碼版本](https://github.com/twkevinzhang/sms-forwarder/releases/tag/v1.0.0)已發布，商店文案、圖示與截圖已完成[素材審閱](STORE_LISTING_DRAFT.md)。發布流程與 F-Droid 初次收錄步驟見[發布說明](fdroid/README.md)，實際建置證據見[驗證紀錄](fdroid/BUILD_VERIFICATION.md)。GitHub Release 不代表已獲 F-Droid 收錄；官方簽章安裝包須等待其審核與發布。
+正式 application ID 為 `com.twkevinzhang.smsforwarder`。[v1.0.0 原始碼版本](https://github.com/twkevinzhang/sms-forwarder/releases/tag/v1.0.0)已發布，商店文案、圖示與截圖已完成[素材審閱](STORE_LISTING_DRAFT.md)。發布流程與 F-Droid 初次收錄步驟見[發布說明](fdroid/README.md)，實際建置證據見[驗證紀錄](fdroid/BUILD_VERIFICATION.md)。已於 2026-10-15 提交 [F-Droid 收錄申請 !52669](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/52669)，fork 與 MR 建置流水線均已通過，目前等待維護者審查；官方簽章安裝包須等待其審核與發布。
