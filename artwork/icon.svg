@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 108 108">
+<!-- Original SMS Forwarder artwork. SPDX-License-Identifier: MIT -->
+<rect width="108" height="108" rx="24" fill="#125C66"/>
+<path fill="#fff" fill-rule="evenodd" d="M35 31H73Q79 31 79 37V66Q79 72 73 72H48L33 83V72Q29 71 29 66V37Q29 31 35 31Z M36 38V65H40V69L46 65H72V38Z"/>
+<path fill="#fff" d="M40 48H56V42L69 52L56 62V56H40Z"/>
+</svg>

@@ -7,9 +7,11 @@ signing key or GitLab token is required by these GitHub workflows.
 
 ## Current state
 
-The store listing and initial recipe are drafts. No tag, GitHub Release,
-F-Droid submission or remote repository setting is created by this change.
-Screenshots and owner approval are required before publication. The local
+The owner has approved the listing text. Final screenshots and the initial
+recipe remain in preparation; no release tag or F-Droid submission has been
+created. Main-branch GitHub CI has passed. Final asset approval is required
+before publication. See `DEPENDENCY_REVIEW.md` for the dependency inventory
+and local scanner results. The local
 recipe is not yet proof of an accepted F-Droid build: run its checks in the
 official build environment before submission.
 
@@ -36,8 +38,8 @@ existing installations and settings are not automatically migrated.
 ## Initial submission
 
 1. Finish the listing review in `STORE_LISTING_DRAFT.md`, audit dependency
-   and artwork licenses, and verify a clean release build. The existing
-   Android launcher artwork is still a template, not a new brand asset.
+   and artwork licenses, and verify a clean release build. The launcher uses original MIT-licensed SMS bubble/arrow vector artwork;
+   its final appearance must be reviewed with the screenshots.
 2. Merge the prepared source, listing and approval record into the public
    GitHub repository's `main`; ensure CI passes.
 3. Create and push `v1.0.0` only after the owner approves release. Tagging

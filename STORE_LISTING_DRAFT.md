@@ -1,8 +1,9 @@
 # Store listing — draft, not approved
 
-The English and Traditional Chinese descriptions under
-`fastlane/metadata/android/` are drafts. Do not publish a release or submit
-this recipe for inclusion until the repository owner has reviewed them.
+The repository owner has approved the English and Traditional Chinese text
+under `fastlane/metadata/android/`. Final screenshots and the complete listing
+still require review. Do not publish a release or submit this recipe for
+inclusion until the final assets are approved.
 
 ## Proposed listing
 
@@ -28,8 +29,9 @@ two actual screenshots of the final UI with fictional numbers and messages:
 
 Place PNG files in `en-US/images/phoneScreenshots/` beneath the metadata root;
 localized screenshots may also be added under `zh-TW`. Review status bars,
-notifications and image metadata before committing. The app icon can be
-extracted by F-Droid from the APK; a custom store icon is optional.
+notifications and image metadata before committing. The original MIT-licensed store icon is in each locale's `images/icon.png`;
+its vector source is `artwork/icon.svg`. The adaptive launcher icon uses the
+same artwork. Final visual approval includes these icons.
 
 ## Approval record
 
