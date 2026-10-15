@@ -14,25 +14,19 @@ The owner authorized final asset review, release and initial submission.
 The listing includes reviewed English and Traditional Chinese text, original
 icons and real screenshots with a fictional example number. The version and
 asset digest are recorded in `.github/store-listing-approval.json`.
-See `DEPENDENCY_REVIEW.md` for the dependency inventory and local scanner
-results. Version `v1.0.0` is released on GitHub, and its recipe passed the
-official F-Droid container build and binary scan. See `BUILD_VERIFICATION.md`
-for exact revisions, workflow links and the APK checksum. The initial inclusion
-request was submitted on 2026-10-15 as
-[fdroiddata MR !52669](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/52669).
-It remains open, awaiting maintainer review and official publication.
+See `DEPENDENCY_REVIEW.md` for the dependency inventory. The current reviewer
+changes are `v1.0.1` / code `2`, with R8 and upstream-signature RB configured.
+Exact evidence and runtime limits are recorded in [BUILD_VERIFICATION.md](BUILD_VERIFICATION.md).
+The [recovery release run](https://github.com/twkevinzhang/sms-forwarder/actions/runs/38766062942)
+passed. Public signed download, certificate/checksum and signature-copy RB checks
+also passed. The [updated MR pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2951909408) passed all nine jobs;
+Reports review is complete; all ten findings are explained in the verification record.
 
-The public [fork](https://gitlab.com/twkevinzhang/fdroiddata) uses the unprotected
-`com.twkevinzhang.smsforwarder` branch. Commit
-`e199ad8d0252c435709f552b59b87a31a22d369a` adds only the app metadata YAML.
-The [push pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2950886308)
-passed all nine jobs in 409 seconds. The automatically started
-[MR pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2950920367)
-passed all nine jobs in 406 seconds. The MR Reports tab was then reviewed: its
-nine findings (four minor, five informational) are explained in
-[the submission record](SUBMISSION_DRAFT.md#reports-review). CI environment
-warnings are also explained in the MR.
-Passing CI does not imply acceptance, signing or publication.
+[fdroiddata MR !52669](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/52669)
+remains the single inclusion request. The initial 1.0.0 metadata passed both
+fork and MR pipelines, but those historical results do not verify 1.0.1.
+Current metadata commit: `62fd7456d683a717e65979d091dab7754ada21f2`; [MR pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2951909408) passed all nine jobs.
+Maintainer acceptance and official repository publication remain pending.
 
 ## CI and tag releases
 
@@ -65,7 +59,7 @@ existing installations and settings are not automatically migrated.
 ## Initial submission
 
 The following records the original 1.0.0 submission. For the reviewer's RB/R8
-changes, follow [the 1.0.1 candidate checklist](RB_REVIEW.md) instead; do not copy
+changes, follow [the 1.0.1 release record](RB_REVIEW.md) instead; do not copy
 the old recipe or move its release tag.
 
 1. Review the listing, screenshots, artwork and dependency licenses. Record

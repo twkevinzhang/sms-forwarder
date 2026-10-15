@@ -14,14 +14,14 @@ is its design emphasis, rather than a claim that no similar app exists.
 SMS charges and device background restrictions are disclosed in the listing.
 
 - Upstream: https://github.com/twkevinzhang/sms-forwarder
-- Release: https://github.com/twkevinzhang/sms-forwarder/releases/tag/v1.0.0
+- Release: https://github.com/twkevinzhang/sms-forwarder/releases/tag/v1.0.1
 - App ID: `com.twkevinzhang.smsforwarder`
-- versionName / versionCode: `1.0.0` / `1`
-- Source commit: `2d6d89ac359eb50577c7ca4c047ec36ca6f67084`
+- versionName / versionCode: `1.0.1` / `2`
+- Source commit: `92dfcc0545cd9ee53256c51e129dc1be245e2469`
 - App support and maintenance: GitHub Issues and pull requests.
 
-<img src="https://raw.githubusercontent.com/twkevinzhang/sms-forwarder/v1.0.0/fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="240" />
-<img src="https://raw.githubusercontent.com/twkevinzhang/sms-forwarder/v1.0.0/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="240" />
+<img src="https://raw.githubusercontent.com/twkevinzhang/sms-forwarder/v1.0.1/fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="240" />
+<img src="https://raw.githubusercontent.com/twkevinzhang/sms-forwarder/v1.0.1/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="240" />
 
 ## Policy and upstream metadata
 
@@ -44,70 +44,94 @@ SMS charges and device background restrictions are disclosed in the listing.
 
 ## Signing and build evidence
 
-F-Droid signing is requested. There is no independently signed upstream APK,
-so upstream-signature reproducible-build mode is not configured. GitHub
-publishes a source release; its Actions APK is unsigned. No cross-channel
-signature compatibility is claimed.
+Version 1.0.1 enables R8 and configures upstream-signature Reproducible Builds.
+The recipe uses the immutable source above, the GitHub signed-APK `Binaries` URL
+and `AllowedAPKSigningKeys` pinned to `signing-certificate.sha256`.
+See [BUILD_VERIFICATION.md](BUILD_VERIFICATION.md) for the exact unsigned hash,
+production signing checks, recovery results and runtime verification boundary.
 
-The [upstream CI](https://github.com/twkevinzhang/sms-forwarder/actions/runs/38725121541),
-[official F-Droid container build and scan](https://github.com/twkevinzhang/sms-forwarder/actions/runs/38726174239)
-and [tag release workflow](https://github.com/twkevinzhang/sms-forwarder/actions/runs/38726773290)
-all passed. Two independent unsigned builds of this exact source have SHA-256
-`ad66b142677eb1c05e3e0a114b56c36e97bab70e2c7bc5df80f52d14c5826f15`.
-The container run exercised the prebuild main-ancestry and exact asset-approval
-gates. Tag detection also found the correct version, code and source revision.
+## Version 1.0.1 execution record
+
+- App/version: `com.twkevinzhang.smsforwarder`, `1.0.1` / `2`.
+- Immutable source: `92dfcc0545cd9ee53256c51e129dc1be245e2469` (`v1.0.1`).
+- R8: enabled; full/release marker present. Resource shrinking is unchanged.
+- [Main CI](https://github.com/twkevinzhang/sms-forwarder/actions/runs/38763093913): passed.
+- [Initial release run](https://github.com/twkevinzhang/sms-forwarder/actions/runs/38763655654):
+  official-container source build and binary scan passed, but final RB verification
+  failed at the external signature-copy helper (the recovery removes that CLI
+  dependency). This run did
+  not publish the release and is not recorded as a successful RB run.
+- [Recovery run](https://github.com/twkevinzhang/sms-forwarder/actions/runs/38766062942):
+  **passed (build and publication)**. It retains the exact app tag and uses verification
+  utility commit `8c73edb` via the immutable workflow context. The helper calls
+  the pinned F-Droid signature-copy API; certificate, identity and reconstructed
+  signed-byte checks remain required.
+
+The initial official-container unsigned APK hash exactly matches the downloaded
+upstream unsigned artifact:
+
+```text
+32b93843b4593ca085487c48147f521679ef3431d41aa2a4c298c17cdb8c0bcc
+```
+
+Local production-certificate verification and signature-copy comparison passed.
+The local signed reference has SHA-256
+`aafff86bd4e82b0dd525a4eba526a5a58ca6b5920cfe11e88b9cdbe09efd199d`.
+The unauthenticated public release download has this same hash; its checksum,
+pinned certificate and signature-copy verification passed.
+
+The recovery log confirmed the external copier CLI was absent, the pinned API
+was available, and the reconstructed signed APK was byte-identical. The signed
+[APK](https://github.com/twkevinzhang/sms-forwarder/releases/download/v1.0.1/com.twkevinzhang.smsforwarder_2.apk)
+and its checksum are publicly available. Remaining submission checks:
+- Updated fdroiddata commit: `62fd7456d683a717e65979d091dab7754ada21f2`; [MR pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2951909408) passed all nine jobs.
+- Updated MR Reports review: ten findings reviewed and explained (see below).
+
+## Runtime verification boundary
+
+An isolated Android 35 emulator smoke test covered cold launch, English/Traditional
+Chinese switching, settings persistence, permission/SIM validation and returning
+from a synthetic inbound event with forwarding disabled. No crashes were recorded.
+The smoke APK was debug-test-signed. Comparing it with the tagged CI artifact showed
+identical DEX and ZIP member contents except AGP's Git revision metadata
+(`META-INF/version-control-info.textproto`). This supports the same optimized
+runtime code; it is not a production-signature runtime test.
+
+No real SMS, physical-device installation, true dual-SIM routing, successful
+background forwarding, carrier delivery, multipart/duplicate/loop business-terminal
+E2E or OEM background behavior was verified. No existing ASUS app/data was changed.
+The temporary emulator and test APK were removed; logs remain in
+`/tmp/sms-r8-runtime-review/REPORT.md` for this session.
 
 ## Merge request and pipeline
 
-Submitted on 2026-10-15 using the current App inclusion template:
-[fdroiddata MR !52669](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/52669).
-The MR is open; maintainer review, merge and official publication are pending.
-The submitted MR description is the authoritative template/checklist record.
+The existing [MR !52669](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/52669)
+is updated on the same public fork and unprotected app branch. Only
+`metadata/com.twkevinzhang.smsforwarder.yml` belongs in its diff.
 
-- [x] Public [fdroiddata fork](https://gitlab.com/twkevinzhang/fdroiddata), dedicated
-  unprotected [app branch](https://gitlab.com/twkevinzhang/fdroiddata/-/tree/com.twkevinzhang.smsforwarder),
-  one-app diff containing only `metadata/com.twkevinzhang.smsforwarder.yml`.
-- Commit: `e199ad8d0252c435709f552b59b87a31a22d369a`.
-- [x] [Fork push pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2950886308)
-  passed all nine jobs in 409 seconds.
-- [x] [Automatic MR pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2950920367)
-  passed all nine jobs in 406 seconds.
-- [x] MR Reports tab reviewed after the MR pipeline: nine findings explained
-  below. Its initial “No pipeline results yet” state was superseded by the report.
+- Metadata commit: `62fd7456d683a717e65979d091dab7754ada21f2`.
+- [Updated MR pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2951909408): all nine jobs passed.
+- New Reports review: ten findings reviewed and explained (see below).
+- Reviewer discussion reply: prepared for owner review; **not sent by Codex**.
 
-The MR explains warnings from the shared CI environment: initial cache misses,
-root-level Gradle cache paths, Debian package/manual-page cleanup, Python escape
-sequences, pip-as-root and inherited `config.yml` permissions. Gradle also retained
-the packaged AndroidX native library when stripping was unavailable. These did not
-fail the push pipeline. No payment or paid runner capacity was requested.
+Historical 1.0.0 pipelines passed all nine jobs each. The earlier Reports
+permission, AndroidX receiver, ABI and metadata observations were explained;
+R8 and RB are now changed, so new Reports must be inspected. A successful CI
+artifact or upstream GitHub release does not prove official F-Droid publication.
 
-The fork was initially created under `neslxzhen`; GitLab project ID `87671295`
-now reports the canonical namespace `twkevinzhang/fdroiddata` (same project and
-user ID `5571694`). Current links above use the canonical namespace.
+## Current MR Reports review
 
-## Reports review
+The final MR Reports tab was reviewed: ten findings, three Minor and seven Info.
+The three Minor findings are the required `RECEIVE_SMS`, `SEND_SMS` and
+`READ_PHONE_STATE` permissions for SMS forwarding/test-send and SIM selection.
+Informational findings identify the AndroidX dynamic-receiver signature permission,
+production signing identity (`CN=SMS Forwarder contributors`), approximately
+2.1 MB universal / 1.6 MB per-ABI size, R8 9.0.32 full/release (min API 26),
+en-US and zh-TW Fastlane metadata/assets, and the reproducible-build APK.
+All are explained; no R8-marker or RB omission remains.
 
-The MR Reports tab showed four minor and five informational findings. These are
-reviewed observations, not an assertion that F-Droid has accepted the app.
-
-- Minor: `RECEIVE_SMS`, `SEND_SMS` and `READ_PHONE_STATE` are the three declared
-  runtime permissions needed to receive new SMS, forward/test-send SMS and query
-  active subscriptions for explicit dual-SIM selection. They are declared in
-  `app/src/main/AndroidManifest.xml` and checked by `TelephonyGateway` before use.
-- Minor: no R8 marker is expected because `isMinifyEnabled = false`. Release
-  shrinking is intentionally disabled pending its own device regression, as
-  documented in the release guide's ProGuard / R8 section.
-- Informational: `com.twkevinzhang.smsforwarder.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`
-  is a signature-level permission merged automatically from AndroidX Core. The
-  local release manifest-merger report confirms its dependency origin; it is not
-  an additional dangerous runtime permission.
-- Informational: the ABI/size summary lists arm64-v8a, armeabi-v7a, x86 and x86_64
-  at approximately 8.0 MB each, with an 8.5 MB universal APK. The APK is small and
-  an ABI split offers limited savings, so no split is requested.
-- Informational: en-US and zh-TW listing text, screenshots and icons were detected.
-- Informational: the CI-signed APK artifact link is for CI verification. It is not
-  the official F-Droid production signing or evidence of repository publication.
-
-The ABI summary and two localized metadata entries account for the five
-informational findings together with the receiver permission and artifact link.
-No app code or release settings were changed to suppress these reports.
+The [F-Droid CI binary artifact](https://gitlab.com/twkevinzhang/fdroiddata/-/jobs/17208851692/artifacts/raw/tmp/binaries/com.twkevinzhang.smsforwarder_2.binary.apk)
+was downloaded and has SHA-256
+`aafff86bd4e82b0dd525a4eba526a5a58ca6b5920cfe11e88b9cdbe09efd199d`,
+exactly matching the public upstream release. CI success and this comparison do
+not imply maintainer acceptance or official repository publication.

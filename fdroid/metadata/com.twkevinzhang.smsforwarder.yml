@@ -10,18 +10,22 @@ AutoName: SMS Forwarder
 
 RepoType: git
 Repo: https://github.com/twkevinzhang/sms-forwarder.git
+Binaries: 
+  https://github.com/twkevinzhang/sms-forwarder/releases/download/v%v/com.twkevinzhang.smsforwarder_%c.apk
 
 Builds:
-  - versionName: 1.0.0
-    versionCode: 1
-    commit: 2d6d89ac359eb50577c7ca4c047ec36ca6f67084
+  - versionName: 1.0.1
+    versionCode: 2
+    commit: 92dfcc0545cd9ee53256c51e129dc1be245e2469
     subdir: app
     gradle:
       - yes
     prebuild: python3 ../scripts/release.py check --tag 'v$$VERSION$$' --check-main
       --require-approval
 
+AllowedAPKSigningKeys: dd68007e2bffc3deb2c65622f8a02ab5afa71a010de7df89f3e69b30fcc267c2
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$
-CurrentVersion: 1.0.0
-CurrentVersionCode: 1
+CurrentVersion: 1.0.1
+CurrentVersionCode: 2

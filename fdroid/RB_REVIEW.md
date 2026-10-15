@@ -1,4 +1,4 @@
-# R8 and Reproducible Builds — review candidate
+# R8 and Reproducible Builds — release record
 
 Status: owner-approved release preparation. On 2026-10-15 the owner supplied a
 production keystore and local signing configuration, plus the public certificate
@@ -10,7 +10,7 @@ Do not use the Android debug key for production.
 
 ## Proposed release
 
-- Candidate: `1.0.1`, version code `2`, with R8 enabled for release builds.
+- Release: `1.0.1`, version code `2`, with R8 enabled for release builds.
 - Keep the published `v1.0.0` tag and source release immutable.
 - Listing approval now pins the owner-authorized 1.0.1 version and changelog digest.
 - Continue using AGP/AndroidX consumer rules; no blanket keep or warning suppression.
@@ -26,8 +26,8 @@ owner review → dedicated production key + public certificate pin
 
 ## Changes to inspect
 
-- `app/build.gradle.kts`: R8 and candidate version.
-- `fastlane/metadata/android/{en-US,zh-TW}/changelogs/2.txt`: candidate notes.
+- `app/build.gradle.kts`: R8 and release version.
+- `fastlane/metadata/android/{en-US,zh-TW}/changelogs/2.txt`: release notes.
 - `scripts/apk_release.py`: explicit signing, certificate/identity checks, signature
   copying verification, and metadata generation. It never creates keys or publishes.
 - `.github/workflows/release.yml`: sign only approved versions; independent RB
@@ -36,8 +36,8 @@ owner review → dedicated production key + public certificate pin
   its real tag SHA, rebuild in the pinned official container and verify RB.
 - `fdroid/metadata/com.twkevinzhang.smsforwarder.yml.in`: review template containing
   `Binaries` and `AllowedAPKSigningKeys`. It is deliberately not a ready-to-submit
-  YAML file. No invented key fingerprint or future commit is inserted into the
-  existing `1.0.0` submission recipe.
+  YAML file. The actual `.yml` now pins the published 1.0.1 source and verified
+  production certificate.
 
 ## Production key handling
 
@@ -88,9 +88,8 @@ locally. The final metadata keeps that URL. Verification copies the upstream
 signature onto the independently built unsigned APK, verifies its signature and
 requires the reconstructed APK to be byte-identical to the upstream APK.
 
-The normal no-argument `verify_fdroid.sh` still checks the existing recipe's pinned
-source. Until that recipe is replaced, it verifies historical `1.0.0`, not this
-uncommitted R8 candidate. Do not report that run as candidate RB evidence.
+The no-argument `verify_fdroid.sh` now checks the current pinned 1.0.1 recipe.
+The earlier 1.0.0 results remain explicitly historical in `BUILD_VERIFICATION.md`.
 
 After publication, render the actual one-app MR metadata using the approved source
 SHA and verified signed APK (output must not already exist):
@@ -110,47 +109,24 @@ Confirm it is public and immutable, run F-Droid metadata lint/build/RB verificat
 and replace the old build in MR !52669 with only the latest version. Mark RB
 complete only after these steps, not when the template is written.
 
-## Current evidence and remaining acceptance
+## Execution and acceptance
 
-Local JDK 17 checks passed: release R8 build, 7 unit tests and lint (0 errors,
-29 warnings). The candidate unsigned APK is 2,127,103 bytes (2.029 MiB), with R8
-9.0.32 full/release marker and mapping output. This is not a claim of runtime
-regression completion or F-Droid RB acceptance. A debug-key-only signing smoke
-test verified signature copying and rejected a mismatched certificate; it neither
-created a production key nor tested the production identity. Historical `1.0.0` build evidence
-remains in `BUILD_VERIFICATION.md`.
+The [recovery release workflow](https://github.com/twkevinzhang/sms-forwarder/actions/runs/38766062942)
+passed build, official-container signature-copy comparison and publication while
+retaining immutable app source `92dfcc0545cd9ee53256c51e129dc1be245e2469`.
+Public download, checksum and pinned production-certificate verification passed.
+Exact hashes and historical evidence are in [BUILD_VERIFICATION.md](BUILD_VERIFICATION.md).
 
-Two local builds of the same uncommitted candidate (one isolated source copy with
-the same Git revision metadata, its own project cache and no build cache) produced
-byte-identical unsigned APKs:
+The fdroiddata recipe was updated in commit
+`62fd7456d683a717e65979d091dab7754ada21f2`; its [MR pipeline](https://gitlab.com/twkevinzhang/fdroiddata/-/pipelines/2951909408) passed all nine jobs. Reports review
+is complete; all ten findings are explained in the verification record. The reviewer reply will be left in the browser for the owner to
+send personally. F-Droid maintainer acceptance/publication remains external.
 
-```text
-7b728aef25ce62bc9fe8c937966cf2f6a40063d3cec128c00bc9764fd93119eb
-```
-
-The signature-copy smoke also used that isolated rebuild as its unsigned input.
-Both builds ran on this Mac with JDK 17; this does not substitute for the future
-F-Droid Linux/JDK 21 production comparison. A first copy without Git metadata had
-different AGP version-control metadata; the equivalent-input rebuild above
-resolved that test-fixture difference without changing app code.
-
-Release tooling has 19 passing unit checks, including rejection of missing
-secrets, wrong certificates, changed APK identity, different reconstructed bytes,
-uncommitted checkouts and mismatched version tags. Workflow YAML parsing, shell
-syntax and whitespace checks passed. The production certificate pin is now present and approval is true; signing still
-requires a clean checkout at the approved immutable tag.
-
-The optimized release is checked on an isolated emulator for launch, language,
-settings and background smoke behavior. Physical dual-SIM carrier delivery,
-background OEM behavior and real-SMS regressions are not exercised in this
-packaging-only change; no real SMS destination or cost has been authorized.
-No existing ASUS app is overwritten. Do not describe emulator or build checks as
-proof of carrier delivery.
-
-Production signing, official-container independent comparison, public download
-and F-Droid CI/MR results must be recorded from their actual execution. The owner
-will review and submit the final discussion reply personally; Codex leaves it in
-the browser input without sending.
+The isolated emulator smoke exercised optimized runtime code matching the tagged
+APK's DEX. It covered launch, languages, persistence and validation, with no crashes.
+It did not exercise production-signature installation, true dual-SIM routing,
+carrier delivery, enabled background forwarding or full SMS business-terminal
+E2E. No physical ASUS data or real SMS was touched.
 
 References:
 - https://f-droid.org/docs/Reproducible_Builds/
