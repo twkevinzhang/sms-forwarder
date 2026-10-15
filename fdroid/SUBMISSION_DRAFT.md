@@ -1,4 +1,4 @@
-# New App: com.twkevinzhang.smsforwarder
+# New app: SMS Forwarder
 
 Draft merge-request description for fdroid/fdroiddata. Do not submit until
 all remaining checks below are complete.
@@ -27,7 +27,8 @@ are handled through GitHub Issues and pull requests.
 - [x] Resolved runtime dependency/constraint POM license inventory.
 - [ ] Final real screenshots and owner approval of complete listing.
 - [x] Original MIT-licensed launcher artwork replaces template assets.
-- [ ] Approved immutable release tag exists upstream.
+- [ ] Approved immutable release tag exists upstream, and recipe `commit`
+      is replaced with its full SHA (the current SHA is preparation only).
 - [ ] Official container/server recipe build, including prebuild approval
       and origin/main ancestry checks, succeeds.
 - [ ] fdroiddata fork CI succeeds.

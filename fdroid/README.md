@@ -44,7 +44,10 @@ existing installations and settings are not automatically migrated.
    GitHub repository's `main`; ensure CI passes.
 3. Create and push `v1.0.0` only after the owner approves release. Tagging
    requires a separate explicit action; this preparation does not do it.
-4. Fork `https://gitlab.com/fdroid/fdroiddata` and copy
+4. Replace the draft recipe's `commit` with the full SHA resolved by
+   `git rev-list -n 1 v1.0.0` after the approved tag exists. The currently
+   pinned preparation commit is intentionally unapproved and cannot publish.
+   Fork `https://gitlab.com/fdroid/fdroiddata` and copy
    `metadata/com.twkevinzhang.smsforwarder.yml` from this directory to its
    `metadata/` directory. Run there:
 
@@ -55,7 +58,7 @@ existing installations and settings are not automatically migrated.
    fdroid build --server com.twkevinzhang.smsforwarder
    ```
 
-5. Submit a `New App: com.twkevinzhang.smsforwarder` merge request and respond
+5. Submit a `New app: SMS Forwarder` merge request and respond
    to packaging review. Use GitHub Issues for app support and upstream code
    discussions; packaging review itself necessarily happens on F-Droid's
    GitLab infrastructure.
