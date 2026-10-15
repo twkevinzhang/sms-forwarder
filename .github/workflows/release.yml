@@ -3,12 +3,18 @@ name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing immutable release tag to verify and publish'
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -20,12 +26,13 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ inputs.tag || github.ref_name }}
           fetch-depth: 0
           persist-credentials: false
       - name: Check tag, version, main ancestry and listing approval
         id: validation
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: python3 scripts/release.py check --tag "$RELEASE_TAG" --check-main --github-output
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
@@ -45,7 +52,7 @@ jobs:
           ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease --no-daemon --console=plain
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: unsigned-release-candidate-${{ github.ref_name }}
+          name: unsigned-release-candidate-${{ inputs.tag || github.ref_name }}
           path: app/build/outputs/apk/release/*-unsigned.apk
           if-no-files-found: error
           retention-days: 14
@@ -68,9 +75,20 @@ jobs:
             --output "app/build/outputs/signed/com.twkevinzhang.smsforwarder_${code}.apk"
       - name: Independently rebuild and verify before publication
         if: steps.validation.outputs.approved == 'true'
+        env:
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+          RECOVERY_RUN: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           code=$(python3 -c 'import sys; sys.path.insert(0,"scripts"); import release; print(release.configuration(release.ROOT)["versionCode"])')
-          timeout 25m bash scripts/verify_fdroid.sh --upstream-apk "app/build/outputs/signed/com.twkevinzhang.smsforwarder_${code}.apk"
+          verifier=scripts/verify_fdroid.sh
+          if [[ "$RECOVERY_RUN" == true ]]; then
+            if ! git cat-file -e "${WORKFLOW_SHA}^{commit}"; then
+              git fetch --no-tags origin "$WORKFLOW_SHA"
+            fi
+            verifier="$RUNNER_TEMP/verify_fdroid.sh"
+            git show "${WORKFLOW_SHA}:scripts/verify_fdroid.sh" > "$verifier"
+          fi
+          timeout 25m bash "$verifier" --upstream-apk "app/build/outputs/signed/com.twkevinzhang.smsforwarder_${code}.apk"
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: steps.validation.outputs.approved == 'true'
         with:
@@ -80,7 +98,7 @@ jobs:
           retention-days: 14
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: r8-mapping-${{ github.ref_name }}
+          name: r8-mapping-${{ inputs.tag || github.ref_name }}
           path: app/build/outputs/mapping/release/mapping.txt
           if-no-files-found: error
           retention-days: 90
@@ -95,11 +113,12 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ inputs.tag || github.ref_name }}
           fetch-depth: 0
           persist-credentials: false
       - name: Recheck approval
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: python3 scripts/release.py check --tag "$RELEASE_TAG" --require-approval
       - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
@@ -109,5 +128,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: gh release create "$RELEASE_TAG" signed-release/*.apk signed-release/*.sha256 --verify-tag --title "$RELEASE_TAG" --notes-file fdroid/RELEASE_NOTES.md

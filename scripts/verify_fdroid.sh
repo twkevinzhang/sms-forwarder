@@ -116,7 +116,33 @@ fdroid scanner --exit-code "$apk"
 sha256sum "$apk"
 /opt/android-sdk/build-tools/36.0.0/aapt dump badging "$apk"
 if [[ -f /build/upstream.apk ]]; then
+  if command -v apksigcopier >/dev/null 2>&1; then
+    echo 'Signature copier CLI: available'
+  else
+    echo 'Signature copier CLI: absent; using pinned F-Droid Python API'
+  fi
+  python3 - <<'COPIER_API'
+try:
+    from fdroidserver import apksigcopier
+except ImportError:
+    raise SystemExit('Pinned signature copier API: import failed')
+if not callable(getattr(apksigcopier, 'do_copy', None)):
+    raise SystemExit('Pinned signature copier API: do_copy unavailable')
+print('Pinned signature copier API: available')
+COPIER_API
+  cat > /tmp/sms-apksigcopier <<'COPIER_WRAPPER'
+#!/usr/bin/env python3
+import sys
+from fdroidserver import apksigcopier
+
+if len(sys.argv) != 5 or sys.argv[1] != 'copy':
+    raise SystemExit('Signature copier accepts only copy with three file paths')
+apksigcopier.do_copy(sys.argv[2], sys.argv[3], sys.argv[4],
+                     v1_only=False, exclude=apksigcopier.exclude_meta)
+COPIER_WRAPPER
+  chmod 700 /tmp/sms-apksigcopier
   python3 /upstream/scripts/apk_release.py verify-rb \
+    --copier /tmp/sms-apksigcopier \
     --apksigner /opt/android-sdk/build-tools/34.0.0/apksigner \
     --aapt /opt/android-sdk/build-tools/36.0.0/aapt \
     --unsigned "$apk" --signed /build/upstream.apk
