@@ -17,3 +17,7 @@ local.properties
 **/build/
 
 .kotlin/
+
+__pycache__/
+
+*.py[cod]

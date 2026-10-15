@@ -7,12 +7,12 @@ android {
     namespace = "tw.local.smsforwarder"
     compileSdk = 36
     defaultConfig {
-        applicationId = "tw.local.smsforwarder"
+        applicationId = "com.twkevinzhang.smsforwarder"
         minSdk = 26
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
     }
 
     buildTypes {

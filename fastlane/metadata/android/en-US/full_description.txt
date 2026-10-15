@@ -1,0 +1,29 @@
+SMS Forwarder automatically forwards new SMS messages from a selected SIM to a phone number you choose.
+
+Features:
+• Select the SIM to monitor and the SIM used to send forwarded messages independently.
+• Save a destination number and enable or disable automatic forwarding.
+• Send a fixed test message using your saved settings.
+• View up to 50 status records without storing message bodies in the app's history.
+• Distinguish sending status from carrier delivery confirmation, when available.
+• No app server, account, advertising, or analytics service is required.
+
+Permissions:
+• Receive SMS: detect new incoming SMS messages.
+• Send SMS: send forwarded and test messages.
+• Phone state: identify available SIM subscriptions and select the sending SIM.
+
+Important limitations:
+• Your mobile operator may charge for every SMS segment, including test messages. A forwarded message can contain multiple segments.
+• Sending is limited to 30 messages per hour, including tests, and 10 segments per message. Blocked messages are not queued for later delivery.
+• Failed or unconfirmed messages are not automatically retried.
+• Battery and background-management restrictions can prevent forwarding or delay status reports. Check your device settings and test with the screen locked.
+• After a reboot, unlock the phone once. After force-stopping the app, open it again.
+• SMS only: email, MMS, RCS, historical-message forwarding, and sender or keyword filters are not included.
+• Do not use one of the phone's own numbers as the destination or create forwarding loops between devices.
+
+Privacy:
+The app does not request Internet access or read historical SMS. Its status history does not retain message bodies. Android may store sent messages in the system messaging app. Forwarded messages include the sender and original message body, so use a destination you control and consider whether messages may contain verification codes or other sensitive information.
+
+Report issues, request features, and discuss maintenance on GitHub:
+https://github.com/twkevinzhang/sms-forwarder/issues

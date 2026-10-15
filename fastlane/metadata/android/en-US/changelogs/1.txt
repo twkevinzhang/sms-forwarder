@@ -1,0 +1,1 @@
+Initial release: select receiving and sending SIMs, forward new SMS, send a test message, and review local sending status. Includes forwarding limits and no automatic retries.

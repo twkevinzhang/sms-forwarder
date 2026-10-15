@@ -36,3 +36,11 @@ Android 原生 app，適用雙卡手機。指定接收 SIM、發送 SIM 與目�
 ```
 
 APK：`app/build/outputs/apk/debug/app-debug.apk`。ADB 安裝後，從手機啟動 app 設定；此版採側載，尚未進行 Google Play 發布審核。
+
+## 授權與支援
+
+本專案採 [MIT 授權](LICENSE)。問題回報、功能建議與維護討論一律使用 [GitHub Issues](https://github.com/twkevinzhang/sms-forwarder/issues)；程式貢獻透過 GitHub Pull Requests。請勿在公開回報附上真實門號、簡訊本文、驗證碼、PIN 或私鑰。
+
+## 發布
+
+正式 application ID 為 `com.twkevinzhang.smsforwarder`。發布流程與 F-Droid 官方主倉庫的初次收錄步驟見 [發布準備說明](fdroid/README.md)。商店文案目前為 [待確認草稿](STORE_LISTING_DRAFT.md)，核准前不發布。

@@ -1,0 +1,6 @@
+# Project-specific R8/ProGuard rules.
+# Android framework components are retained by the Android Gradle Plugin;
+# AndroidX and Compose supply their own consumer rules.
+# No blanket keep rules or warning suppression are needed by this app.
+# Release shrinking remains disabled until an optimized release has its own
+# device regression coverage. This file also works when shrinking is enabled.
