@@ -8,7 +8,8 @@ data class Settings(
 )
 
 object ForwardPolicy {
-    const val MARKER = "[SMS轉寄]"
+    const val MARKER = "[SMSForwarder]"
+    const val LEGACY_MARKER = "[SMS轉寄]"
 
     enum class Delivery {
         DELIVERED,
@@ -25,29 +26,23 @@ object ForwardPolicy {
             else -> Delivery.FAILED
         }
 
-    fun sendFailure(code: Int): String =
-        when (code) {
-            2 -> "行動通訊關閉，請檢查飛航模式"
-            4 -> "目前沒有行動通訊服務"
-            5 -> "已達系統簡訊發送限制"
-            6 -> "固定撥號設定不允許此門號"
-            else -> "電信或裝置拒絕發送"
-        }
-
     fun normalize(number: String) = number.filterNot { it.isWhitespace() || it in "()-" }
 
     fun validNumber(number: String) = Regex("\\+?[0-9]{5,15}").matches(number)
 
-    fun configurationError(s: Settings, active: Set<Int>): String? =
+    fun configurationError(s: Settings, active: Set<Int>): Code? =
         when {
-            !validNumber(s.destination) -> "請輸入 5–15 位手機門號（可加國碼 +）"
-            s.receiveId !in active -> "偵測 SIM 不可用，請重新選擇"
-            s.sendId !in active -> "發送 SIM 不可用，請重新選擇"
+            !validNumber(s.destination) -> Code.INVALID_NUMBER
+            s.receiveId !in active -> Code.RECEIVE_SIM_UNAVAILABLE
+            s.sendId !in active -> Code.SEND_SIM_UNAVAILABLE
             else -> null
         }
 
     fun shouldForward(s: Settings, subscription: Int, sender: String, body: String): Boolean =
-        s.enabled && subscription == s.receiveId && !body.startsWith(MARKER)
+        s.enabled &&
+            subscription == s.receiveId &&
+            !body.startsWith(MARKER) &&
+            !body.startsWith(LEGACY_MARKER)
 
-    fun message(sender: String, body: String) = "$MARKER\n來自：$sender\n$body"
+    fun message(sender: String, body: String, header: String) = "$MARKER\n$header$sender\n$body"
 }

@@ -16,10 +16,12 @@ import android.telephony.SmsMessage
 import android.telephony.SubscriptionManager
 import androidx.core.content.ContextCompat
 import java.util.UUID
-import tw.local.smsforwarder.domain.ForwardPolicy
+import tw.local.smsforwarder.domain.*
 import tw.local.smsforwarder.domain.Settings
+import tw.local.smsforwarder.i18n.AppLanguages
+import tw.local.smsforwarder.i18n.LocalizedText
 
-data class Sim(val id: Int, val label: String)
+data class Sim(val id: Int, val slot: Int, val name: String)
 
 class TelephonyGateway(private val context: Context) {
     fun permissionReady() =
@@ -41,25 +43,27 @@ class TelephonyGateway(private val context: Context) {
                 .getSystemService(SubscriptionManager::class.java)
                 .activeSubscriptionInfoList
                 .orEmpty()
-                .map { Sim(it.subscriptionId, "SIM ${it.simSlotIndex + 1} · ${it.displayName}") }
+                .map { Sim(it.subscriptionId, it.simSlotIndex + 1, it.displayName.toString()) }
         } catch (_: SecurityException) {
             emptyList()
         }
 
     // All required permissions are checked immediately before calling the platform API.
     @SuppressLint("MissingPermission")
-    fun send(s: Settings, text: String, kind: String): String {
-        check(permissionReady()) { "請先授予電話與簡訊權限" }
-        ForwardPolicy.configurationError(s, sims().map { it.id }.toSet())?.let { error(it) }
+    fun send(s: Settings, text: String, kind: Kind): Notice {
+        if (!permissionReady()) throw ForwardException(Notice(Code.PERMISSION_REQUIRED))
+        ForwardPolicy.configurationError(s, sims().map { it.id }.toSet())?.let {
+            throw ForwardException(Notice(it))
+        }
         val manager =
             if (Build.VERSION.SDK_INT >= 31)
                 context.getSystemService(SmsManager::class.java).createForSubscriptionId(s.sendId)
             else SmsManager.getSmsManagerForSubscriptionId(s.sendId)
         val parts = manager.divideMessage(text)
-        check(parts.size <= 10) { "訊息超過 10 段，已停止以限制費用" }
+        if (parts.size > 10) throw ForwardException(Notice(Code.TOO_MANY_PARTS))
         val id = UUID.randomUUID().toString()
         val store = Store(context)
-        check(store.reserveSend()) { "已達每小時 30 則發送上限（含測試）" }
+        if (!store.reserveSend()) throw ForwardException(Notice(Code.RATE_LIMIT))
         store.add(id, kind, parts.size)
         fun callbacks(delivery: Boolean) =
             ArrayList(
@@ -97,10 +101,10 @@ class TelephonyGateway(private val context: Context) {
                 callbacks(true),
             )
         } catch (e: Exception) {
-            store.status(id, "發送失敗：${e.javaClass.simpleName}；不自動重送")
-            throw e
+            store.status(id, Notice(Code.SEND_EXCEPTION))
+            throw ForwardException(Notice(Code.SEND_EXCEPTION), recorded = true)
         }
-        return "已提交 ${parts.size} 段，請查看電信回報與收件手機"
+        return Notice(Code.SUBMITTED, parts.size)
     }
 }
 
@@ -162,23 +166,36 @@ class IncomingSmsReceiver : BroadcastReceiver() {
         val id = UUID.randomUUID().toString()
         val gateway = TelephonyGateway(context)
         val error =
-            if (!gateway.permissionReady()) "缺少簡訊或電話權限"
+            if (!gateway.permissionReady()) Code.PERMISSION_REQUIRED
             else ForwardPolicy.configurationError(s, gateway.sims().map { it.id }.toSet())
         if (error != null) {
-            store.add(id, "自動轉寄", 0)
-            store.status(id, error)
+            store.add(id, Kind.AUTOMATIC, 0)
+            store.status(id, Notice(error))
             return
         }
         if (!store.reserve("$subscription|$sender|${messages.first().timestampMillis}|$body")) {
-            store.add(id, "略過", 0)
-            store.status(id, "重複訊息或已達每小時 30 則上限")
+            store.add(id, Kind.SKIPPED, 0)
+            store.status(id, Notice(Code.DUPLICATE_OR_LIMIT))
             return
         }
         try {
-            gateway.send(s, ForwardPolicy.message(sender, body), "自動轉寄")
+            gateway.send(
+                s,
+                LocalizedText.forwardMessage(
+                    AppLanguages(context).localizedContext(),
+                    sender,
+                    body,
+                ),
+                Kind.AUTOMATIC,
+            )
         } catch (e: Exception) {
-            store.add(id, "自動轉寄", 0)
-            store.status(id, e.message ?: "發送失敗")
+            if (e !is ForwardException || !e.recorded) {
+                store.add(id, Kind.AUTOMATIC, 0)
+                store.status(
+                    id,
+                    if (e is ForwardException) e.notice else Notice(Code.SEND_EXCEPTION),
+                )
+            }
         }
     }
 }

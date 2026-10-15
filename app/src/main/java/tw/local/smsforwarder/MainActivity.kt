@@ -5,11 +5,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings as AndroidSettings
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -20,6 +20,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,15 +31,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import java.text.SimpleDateFormat
+import java.text.DateFormat
 import java.util.Date
-import java.util.Locale
 import kotlinx.coroutines.delay
 import tw.local.smsforwarder.data.*
+import tw.local.smsforwarder.domain.*
 import tw.local.smsforwarder.domain.ForwardPolicy
 import tw.local.smsforwarder.domain.Settings
+import tw.local.smsforwarder.i18n.*
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -52,6 +56,11 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun ForwardScreen() {
+        val context = LocalContext.current
+        val resources = LocalResources.current
+        val configuration = LocalConfiguration.current
+        fun t(id: Int) = resources.getString(id)
+        val languages = remember { AppLanguages(this) }
         val gateway = remember { TelephonyGateway(this) }
         val store = remember { Store(this) }
         var savedSettings by remember { mutableStateOf(store.settings()) }
@@ -62,7 +71,12 @@ class MainActivity : ComponentActivity() {
         var destination by rememberSaveable { mutableStateOf(initial.destination) }
         var ready by remember { mutableStateOf(gateway.permissionReady()) }
         var sims by remember { mutableStateOf(gateway.sims()) }
-        var result by rememberSaveable { mutableStateOf("") }
+        var resultName by rememberSaveable { mutableStateOf<String?>(null) }
+        var resultDetail by rememberSaveable { mutableIntStateOf(0) }
+        fun show(notice: Notice) {
+            resultName = notice.code.name
+            resultDetail = notice.detail
+        }
         var records by remember { mutableStateOf(store.records()) }
         val permissions =
             rememberLauncherForActivityResult(
@@ -70,9 +84,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 ready = gateway.permissionReady()
                 sims = gateway.sims()
-                result =
-                    if (ready) "權限已就緒，請選擇 SIM 並儲存"
-                    else "權限未完整授予；自動轉寄與測試無法執行。需要接收簡訊、指定 SIM 及發送簡訊；若不再顯示授權視窗，請開啟系統設定。"
+                show(Notice(if (ready) Code.PERMISSIONS_READY else Code.PERMISSIONS_DENIED))
             }
         val owner = LocalLifecycleOwner.current
         DisposableEffect(owner) {
@@ -103,8 +115,15 @@ class MainActivity : ComponentActivity() {
                     .padding(horizontal = 24.dp, vertical = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text("簡訊自動轉寄", style = MaterialTheme.typography.headlineMedium)
-                Text("選擇接收與發送 SIM，將新收到的簡訊轉寄到指定門號。", style = MaterialTheme.typography.bodyMedium)
+                Text(t(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
+                Text(t(R.string.intro), style = MaterialTheme.typography.bodyMedium)
+                LanguageSelector(languages.selection()) {
+                    try {
+                        languages.select(it)
+                    } catch (_: Exception) {
+                        show(Notice(Code.SAVE_FAILED))
+                    }
+                }
                 Card(Modifier.fillMaxWidth()) {
                     Column(
                         Modifier.padding(16.dp),
@@ -112,30 +131,38 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
-                                Text("自動轉寄", style = MaterialTheme.typography.titleMedium)
-                                Text(if (savedSettings.enabled) "已儲存：啟用" else "已儲存：停用")
+                                Text(
+                                    t(R.string.automatic),
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                                Text(
+                                    if (savedSettings.enabled) t(R.string.saved_enabled)
+                                    else t(R.string.saved_disabled)
+                                )
                             }
                             Switch(
                                 checked = enabled,
                                 onCheckedChange = { enabled = it },
                                 modifier =
-                                    Modifier.semantics { contentDescription = "自動轉寄開關，儲存後生效" },
+                                    Modifier.semantics {
+                                        contentDescription = t(R.string.switch_description)
+                                    },
                             )
                         }
-                        SimSelector("偵測 SIM", receiveId, sims) { receiveId = it }
-                        SimSelector("發送 SIM", sendId, sims) { sendId = it }
+                        SimSelector(t(R.string.receive_sim), receiveId, sims) { receiveId = it }
+                        SimSelector(t(R.string.send_sim), sendId, sims) { sendId = it }
                         OutlinedTextField(
                             value = destination,
                             onValueChange = { destination = it },
-                            label = { Text("收件手機門號") },
-                            placeholder = { Text("例如 +12025550101") },
+                            label = { Text(t(R.string.destination)) },
+                            placeholder = { Text(t(R.string.destination_example)) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                             modifier = Modifier.fillMaxWidth(),
                         )
                         Button(
                             onClick = {
-                                if (!ready && enabled) result = "請先授予必要權限"
+                                if (!ready && enabled) show(Notice(Code.PERMISSION_REQUIRED))
                                 else {
                                     val error =
                                         if (enabled)
@@ -144,47 +171,79 @@ class MainActivity : ComponentActivity() {
                                                 sims.map { it.id }.toSet(),
                                             )
                                         else null
-                                    if (error != null) result = error
-                                    else
-                                        result =
-                                            if (store.save(draft)) {
-                                                savedSettings = draft
-                                                "設定已儲存；${if(enabled) "自動轉寄已啟用" else "自動轉寄已停用"}"
-                                            } else "儲存失敗，請重試"
+                                    if (error != null) show(Notice(error))
+                                    else {
+                                        if (store.save(draft)) {
+                                            savedSettings = draft
+                                            show(
+                                                Notice(
+                                                    if (enabled) Code.SAVED_ENABLED
+                                                    else Code.SAVED_DISABLED
+                                                )
+                                            )
+                                        } else show(Notice(Code.SAVE_FAILED))
+                                    }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text("儲存設定")
+                            Text(t(R.string.save))
                         }
                         OutlinedButton(
                             onClick = {
-                                result =
+                                show(
                                     try {
                                         gateway.send(
                                             store.settings(),
-                                            "[SMS轉寄測試] 這是簡訊自動轉寄的測試訊息。",
-                                            "手動測試",
+                                            LocalizedText.testMessage(
+                                                AppLanguages(context).localizedContext()
+                                            ),
+                                            Kind.TEST,
                                         )
-                                    } catch (e: Exception) {
-                                        e.message ?: "測試失敗"
+                                    } catch (e: ForwardException) {
+                                        e.notice
+                                    } catch (_: Exception) {
+                                        Notice(Code.SEND_EXCEPTION)
                                     }
+                                )
                                 records = store.records()
                             },
                             enabled = !dirty && ready,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text("發送測試簡訊")
+                            Text(t(R.string.test))
                         }
                         Text(
-                            if (dirty) "有未儲存的變更；儲存後才能測試。" else "測試使用已儲存設定，即使自動轉寄停用仍可測試。",
+                            if (dirty) t(R.string.unsaved) else t(R.string.test_hint),
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
                 }
-                if (result.isNotEmpty()) Text(result, color = MaterialTheme.colorScheme.primary)
-                Text("權限與背景運作", style = MaterialTheme.typography.titleLarge)
-                Text(if (ready) "必要權限已授予 · 可用 SIM：${sims.size} 張" else "需要簡訊收發與電話狀態權限，以辨識及指定 SIM。")
+                resultName?.let {
+                    Text(
+                        LocalizedText.notice(
+                            resources,
+                            Notice(
+                                runCatching { Code.valueOf(it) }.getOrDefault(Code.LEGACY_UNKNOWN),
+                                resultDetail,
+                            ),
+                        ),
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+                Text(
+                    t(R.string.permissions_background),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                Text(
+                    if (ready)
+                        resources.getQuantityString(
+                            R.plurals.sim_count,
+                            sims.size,
+                            sims.size,
+                        )
+                    else t(R.string.permissions_explanation)
+                )
                 if (!ready) {
                     val rationale =
                         arrayOf(
@@ -193,7 +252,7 @@ class MainActivity : ComponentActivity() {
                                 Manifest.permission.READ_PHONE_STATE,
                             )
                             .any { shouldShowRequestPermissionRationale(it) }
-                    if (rationale) Text("先前拒絕的權限是收取新簡訊、辨識 SIM 與指定 SIM 發送所必需；你也可以保持停用。")
+                    if (rationale) Text(t(R.string.rationale))
                     Button(
                         onClick = {
                             permissions.launch(
@@ -205,7 +264,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     ) {
-                        Text("授予必要權限")
+                        Text(t(R.string.grant_permissions))
                     }
                     TextButton(
                         onClick = {
@@ -217,11 +276,11 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     ) {
-                        Text("開啟 App 權限設定")
+                        Text(t(R.string.app_permission_settings))
                     }
                 }
                 Text(
-                    "鎖屏及關閉畫面後仍接收新簡訊。重新開機後請先解鎖一次。強制停止 App 後，需重新開啟。手機的省電與背景管理設定可能限制背景運作。",
+                    t(R.string.background_hint),
                     style = MaterialTheme.typography.bodySmall,
                 )
                 OutlinedButton(
@@ -231,29 +290,33 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 ) {
-                    Text("檢查電池最佳化設定")
+                    Text(t(R.string.battery_settings))
                 }
                 Text(
-                    "轉寄會產生電信費。每則最多 10 段、包含測試每小時最多 30 則；失敗不自動重送。已有轉寄標記的簡訊會略過以降低循環風險。請勿設定成本機任一 SIM 的門號，亦勿建立互相轉寄規則。",
+                    t(R.string.cost_hint),
                     style = MaterialTheme.typography.bodySmall,
                 )
-                Text("最近轉寄紀錄", style = MaterialTheme.typography.titleLarge)
+                Text(t(R.string.recent_records), style = MaterialTheme.typography.titleLarge)
                 Text(
-                    "最多保留 50 筆狀態，不保存簡訊內容。送出與送達不同；送達回報須電信商支援。",
+                    t(R.string.records_hint),
                     style = MaterialTheme.typography.bodySmall,
                 )
-                if (records.isEmpty()) Text("尚無轉寄紀錄")
+                if (records.isEmpty()) Text(t(R.string.no_records))
                 records.forEach { r ->
                     Card(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp)) {
                             Text(
-                                "${r.getString("kind")} · ${SimpleDateFormat("MM/dd HH:mm:ss", Locale.TAIWAN).format(Date(r.getLong("time")))}",
+                                "${LocalizedText.kind(resources, runCatching { Kind.valueOf(r.getString("kind")) }.getOrDefault(Kind.UNKNOWN))} · ${DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM, configuration.locales[0]).format(Date(r.getLong("time")))}",
                                 style = MaterialTheme.typography.labelLarge,
                             )
-                            Text(store.statusText(r))
+                            Text(LocalizedText.notice(resources, store.statusNotice(r)))
                             if (r.getInt("parts") > 0)
                                 Text(
-                                    "${r.getInt("parts")} 段",
+                                    resources.getQuantityString(
+                                        R.plurals.part_count,
+                                        r.getInt("parts"),
+                                        r.getInt("parts"),
+                                    ),
                                     style = MaterialTheme.typography.bodySmall,
                                 )
                         }
@@ -266,29 +329,64 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun SimSelector(label: String, selected: Int, sims: List<Sim>, onSelect: (Int) -> Unit) {
+    val resources = LocalResources.current
+    fun t(id: Int) = resources.getString(id)
+    fun label(sim: Sim) = resources.getString(R.string.sim_label, sim.slot, sim.name)
     var expanded by remember { mutableStateOf(false) }
     Column {
         Text(label, style = MaterialTheme.typography.labelLarge)
         Box {
             OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    sims.firstOrNull { it.id == selected }?.label
-                        ?: if (selected >= 0) "原 SIM 已不可用，請重新選擇" else "請選擇 SIM"
+                    sims.firstOrNull { it.id == selected }?.let { label(it) }
+                        ?: if (selected >= 0) t(R.string.sim_unavailable)
+                        else t(R.string.choose_sim)
                 )
             }
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 if (sims.isEmpty())
                     DropdownMenuItem(
-                        text = { Text("沒有可用 SIM，請檢查權限與 SIM 狀態") },
+                        text = { Text(t(R.string.no_sim)) },
                         onClick = { expanded = false },
                         enabled = false,
                     )
                 sims.forEach { sim ->
                     DropdownMenuItem(
-                        text = { Text(sim.label) },
+                        text = { Text(label(sim)) },
                         onClick = {
                             onSelect(sim.id)
                             expanded = false
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanguageSelector(selected: String, onSelect: (String) -> Unit) {
+    val resources = LocalResources.current
+    val options =
+        listOf(
+            "" to R.string.language_system,
+            "zh-Hant" to R.string.language_zh,
+            "en" to R.string.language_en,
+        )
+    var expanded by remember { mutableStateOf(false) }
+    Column {
+        Text(resources.getString(R.string.language), style = MaterialTheme.typography.labelLarge)
+        Box {
+            OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(resources.getString(options.first { it.first == selected }.second))
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                options.forEach { (tag, label) ->
+                    DropdownMenuItem(
+                        text = { Text(resources.getString(label)) },
+                        onClick = {
+                            expanded = false
+                            onSelect(tag)
                         },
                     )
                 }

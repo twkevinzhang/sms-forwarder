@@ -33,15 +33,26 @@ class ForwardPolicyTest {
                 settings,
                 7,
                 "+12025550102",
-                ForwardPolicy.message("sender", "hello"),
+                ForwardPolicy.message("sender", "hello", "From: "),
             )
         )
     }
 
     @Test
     fun unavailableSimNeverFallsBack() {
-        assertNotNull(ForwardPolicy.configurationError(settings, setOf(7)))
+        assertEquals(
+            Code.SEND_SIM_UNAVAILABLE,
+            ForwardPolicy.configurationError(settings, setOf(7)),
+        )
         assertNull(ForwardPolicy.configurationError(settings, setOf(7, 9)))
+    }
+
+    @Test
+    fun forwardingPreservesBodyAndRecognizesBothMarkers() {
+        val body = "  line one\n第二行\n\n"
+        assertTrue(ForwardPolicy.message("sender", body, "From: ").endsWith(body))
+        assertFalse(ForwardPolicy.shouldForward(settings, 7, "sender", "[SMSForwarder] content"))
+        assertFalse(ForwardPolicy.shouldForward(settings, 7, "sender", "[SMS轉寄] content"))
     }
 
     @Test
