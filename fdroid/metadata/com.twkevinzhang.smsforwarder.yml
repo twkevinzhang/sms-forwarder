@@ -14,7 +14,7 @@ Repo: https://github.com/twkevinzhang/sms-forwarder.git
 Builds:
   - versionName: 1.0.0
     versionCode: 1
-    commit: 6df991b77741bf7c97229e72fb46f046999ce4c9
+    commit: 2d6d89ac359eb50577c7ca4c047ec36ca6f67084
     subdir: app
     gradle:
       - yes
