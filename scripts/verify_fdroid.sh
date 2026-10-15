@@ -5,8 +5,14 @@ set -euo pipefail
 project_root=$(git rev-parse --show-toplevel)
 stage=$(mktemp -d)
 container_name="sms-forwarder-fdroid-${GITHUB_RUN_ID:-local}"
+image=registry.gitlab.com/fdroid/fdroidserver@sha256:9cb68105642ca4e7b295f0ceab10f069f5b3247dc18fa7c36046e9d81aa469a8
 cleanup() {
   docker rm -f "$container_name" >/dev/null 2>&1 || true
+  # Files created by container root must be removable by the Linux runner.
+  if [[ -d "$stage/data" ]] && docker image inspect "$image" >/dev/null 2>&1; then
+    docker run --rm -v "$stage/data:/data" --entrypoint /bin/chown \
+      "$image" -R "$(id -u):$(id -g)" /data >/dev/null 2>&1 || true
+  fi
   rm -rf "$stage"
 }
 trap cleanup EXIT
@@ -29,6 +35,8 @@ export PATH=/home/vagrant/fdroidserver:$PATH
 export PYTHONPATH=/home/vagrant/fdroidserver
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 export GRADLE_OPTS='-Dorg.gradle.workers.max=2 -Dorg.gradle.daemon=false'
+# The pinned tool checkout is mounted read-only from the runner's UID.
+git config --global --add safe.directory /home/vagrant/fdroidserver
 sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
 cd /build/data
 fdroid readmeta
@@ -55,5 +63,5 @@ docker run --rm --platform linux/amd64 --cpus 4 --memory 6g \
   -v "$stage:/build" \
   -v "$stage/fdroidserver:/home/vagrant/fdroidserver:ro" \
   --entrypoint /bin/bash \
-  registry.gitlab.com/fdroid/fdroidserver@sha256:9cb68105642ca4e7b295f0ceab10f069f5b3247dc18fa7c36046e9d81aa469a8 \
+  "$image" \
   -l /build/build.sh
