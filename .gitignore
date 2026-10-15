@@ -21,3 +21,12 @@ local.properties
 __pycache__/
 
 *.py[cod]
+
+# Never commit release keys or passwords.
+*.jks
+*.keystore
+*.p12
+keystore.properties
+signing.properties
+
+/.sms-forwarder-signing.local.json

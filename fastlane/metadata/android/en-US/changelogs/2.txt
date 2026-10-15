@@ -1,0 +1,1 @@
+Enable R8 release code optimization and developer-signed Reproducible Builds for F-Droid. Signed APK publication requires independent rebuilding and signature verification.

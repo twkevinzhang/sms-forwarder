@@ -35,7 +35,7 @@ Android 原生 app，適用雙卡手機。指定接收 SIM、發送 SIM 與目�
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-開發用 APK：`app/build/outputs/apk/debug/app-debug.apk`。ADB 安裝後，從手機啟動 app 設定。正式簽章安裝包預計由 F-Droid 建置與提供，目前尚待官方收錄；未進行 Google Play 發布審核。
+開發用 APK：`app/build/outputs/apk/debug/app-debug.apk`。ADB 安裝後，從手機啟動 app 設定。目前尚待 F-Droid 官方收錄；未進行 Google Play 發布審核。1.0.1 採開發者簽章 RB，流程與待驗收事項見[審閱清單](fdroid/RB_REVIEW.md)。
 
 ## 授權與支援
 
@@ -43,4 +43,4 @@ Android 原生 app，適用雙卡手機。指定接收 SIM、發送 SIM 與目�
 
 ## 發布
 
-正式 application ID 為 `com.twkevinzhang.smsforwarder`。[v1.0.0 原始碼版本](https://github.com/twkevinzhang/sms-forwarder/releases/tag/v1.0.0)已發布，商店文案、圖示與截圖已完成[素材審閱](STORE_LISTING_DRAFT.md)。發布流程與 F-Droid 初次收錄步驟見[發布說明](fdroid/README.md)，實際建置證據見[驗證紀錄](fdroid/BUILD_VERIFICATION.md)。已於 2026-10-15 提交 [F-Droid 收錄申請 !52669](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/52669)，fork 與 MR 建置流水線均已通過，目前等待維護者審查；官方簽章安裝包須等待其審核與發布。
+正式 application ID 為 `com.twkevinzhang.smsforwarder`。[v1.0.0 原始碼版本](https://github.com/twkevinzhang/sms-forwarder/releases/tag/v1.0.0)已發布，該版文案、圖示與截圖已完成[素材審閱](STORE_LISTING_DRAFT.md)。發布流程見[發布說明](fdroid/README.md)，歷史建置證據見[驗證紀錄](fdroid/BUILD_VERIFICATION.md)。2026-10-15 已提交 [F-Droid 收錄申請 !52669](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/52669)，1.0.0 的 fork 與 MR 流水線均已通過。審查者要求 RB 與 R8；對應的 1.0.1 變更已獲授權採開發者簽章 RB，正式發布與驗證結果記錄於發布說明。

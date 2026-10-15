@@ -32,7 +32,9 @@ original vector artwork. Third-party dependency licensing is documented in
 
 ## Approval record
 
-`.github/store-listing-approval.json` pins version 1.0.0 and the exact digest of
-listing files, screenshots and launcher icons. A subsequent change to those
-assets or the release version invalidates approval. Obtain renewed owner
-approval or explicit delegated authorization before recording a new digest.
+The published 1.0.0 source retains its original approval. On 2026-10-15, after
+reviewing the R8/RB candidate, the owner supplied the production keystore and
+explicitly authorized continuation, commit and publication of the reviewer changes.
+The current approval record pins 1.0.1 and its listing/changelog digest. The new
+changelog describes R8 and the RB publication gate; icons and screenshots are
+unchanged. Future listing or version changes require renewed approval.

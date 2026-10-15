@@ -2,8 +2,11 @@
 
 Application ID: `com.twkevinzhang.smsforwarder`.
 Project source is MIT licensed; dependencies retain their respective licenses.
-Signing model: F-Droid builds and signs the official APK. No private APK
-signing key or GitLab token is required by these GitHub workflows.
+The submitted 1.0.0 recipe requested F-Droid signing. The owner-approved 1.0.1 release
+switches to upstream-signature Reproducible Builds and enables R8, following review
+feedback. See [the release preparation record](RB_REVIEW.md) for the planned
+signing workflow and verification. Production key access and its public pin have
+been checked locally, and the required GitHub signing secrets are configured.
 
 ## Current state
 
@@ -40,10 +43,14 @@ Passing CI does not imply acceptance, signing or publication.
   version matches `app/build.gradle.kts`. GitHub's `v*` event filter is broad;
   the validation script rejects invalid formats before building.
 - Only an approved listing with the exact version and listing/icon digest enables
-  the GitHub Release job. Unapproved tags build an Actions artifact only.
-- Actions artifacts are **unsigned**, expire after 14 days, and are not
-  installable distribution APKs. GitHub Releases publish source and notes;
-  signed installation packages come from F-Droid after its own processing.
+  signing and publication. Unapproved tags build unsigned Actions artifacts only.
+- Approved versions require the pinned public certificate and signing secrets.
+  The workflow signs the APK, independently rebuilds in the official F-Droid
+  container and verifies the signature-copy result before publishing the signed
+  APK and checksum. Missing inputs or a mismatch blocks publication.
+- Unsigned candidates and verified signed Actions artifacts expire after 14 days;
+  R8 mapping artifacts expire after 90 days. Preserve mapping files for released
+  versions separately for crash analysis. GitHub Releases retain signed assets.
 - The manually dispatched `fdroid.yml` workflow runs `scripts/verify_fdroid.sh`
   in a pinned official F-Droid container on a standard Linux runner, with
   a 30-minute timeout. It builds the recipe's pinned source, scans the APK
@@ -56,6 +63,10 @@ ID. This release uses the application ID above. It is a separate app from builds
 existing installations and settings are not automatically migrated.
 
 ## Initial submission
+
+The following records the original 1.0.0 submission. For the reviewer's RB/R8
+changes, follow [the 1.0.1 candidate checklist](RB_REVIEW.md) instead; do not copy
+the old recipe or move its release tag.
 
 1. Review the listing, screenshots, artwork and dependency licenses. Record
    the approved version and asset digest. The launcher and store icon are
@@ -88,11 +99,11 @@ publication and the fdroiddata fork pipeline still require their own review.
 
 ## ProGuard / R8
 
-`app/proguard-rules.pro` is present and contains no blanket keep rules or
-warning suppression. Release shrinking remains disabled to avoid an
-unverified runtime change during release preparation. Enabling R8/resource
-shrinking later requires its own release-device regression; it is not
-required for F-Droid inclusion.
+The owner-approved 1.0.1 release enables R8, as requested by the reviewer.
+`app/proguard-rules.pro` contains no blanket keep rules or warning suppression;
+AndroidX consumer rules and AGP manifest rules are retained. Local compilation
+and unit/lint checks have passed. Production RB and runtime results are recorded
+in the release preparation and build verification records. Resource shrinking is unchanged.
 
 ## References
 

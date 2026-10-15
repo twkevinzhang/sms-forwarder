@@ -2,5 +2,5 @@
 # Android framework components are retained by the Android Gradle Plugin;
 # AndroidX and Compose supply their own consumer rules.
 # No blanket keep rules or warning suppression are needed by this app.
-# Release shrinking remains disabled until an optimized release has its own
-# device regression coverage. This file also works when shrinking is enabled.
+# Release code optimization is enabled; validate the optimized APK on a device
+# before publishing. Resource shrinking is not enabled.

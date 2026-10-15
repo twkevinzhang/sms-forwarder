@@ -14,7 +14,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     outputs:
       approved: ${{ steps.validation.outputs.approved }}
     steps:
@@ -35,7 +35,7 @@ jobs:
       - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4
         with:
           log-accepted-android-sdk-licenses: false
-      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'build-tools;34.0.0'
       - name: Verify and build unsigned release
         run: |
           python3 -m unittest discover -s scripts -p 'test_*.py'
@@ -49,6 +49,38 @@ jobs:
       - name: Explain draft gate
         if: steps.validation.outputs.approved != 'true'
         run: echo 'Build completed. Publication is blocked until the store listing and screenshots are reviewed and approved.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Sign approved APK with the pinned upstream certificate
+        if: steps.validation.outputs.approved == 'true'
+        env:
+          SMS_KEYSTORE_BASE64: ${{ secrets.SMS_KEYSTORE_BASE64 }}
+          SMS_KEY_ALIAS: ${{ secrets.SMS_KEY_ALIAS }}
+          SMS_KEYSTORE_PASSWORD: ${{ secrets.SMS_KEYSTORE_PASSWORD }}
+          SMS_KEY_PASSWORD: ${{ secrets.SMS_KEY_PASSWORD }}
+        run: |
+          code=$(python3 -c 'import sys; sys.path.insert(0,"scripts"); import release; print(release.configuration(release.ROOT)["versionCode"])')
+          python3 scripts/apk_release.py sign \
+            --apksigner "$ANDROID_HOME/build-tools/34.0.0/apksigner" \
+            --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt" \
+            --unsigned app/build/outputs/apk/release/app-release-unsigned.apk \
+            --output "app/build/outputs/signed/com.twkevinzhang.smsforwarder_${code}.apk"
+      - name: Independently rebuild and verify before publication
+        if: steps.validation.outputs.approved == 'true'
+        run: |
+          code=$(python3 -c 'import sys; sys.path.insert(0,"scripts"); import release; print(release.configuration(release.ROOT)["versionCode"])')
+          timeout 25m bash scripts/verify_fdroid.sh --upstream-apk "app/build/outputs/signed/com.twkevinzhang.smsforwarder_${code}.apk"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: steps.validation.outputs.approved == 'true'
+        with:
+          name: verified-signed-release
+          path: app/build/outputs/signed/*
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: r8-mapping-${{ github.ref_name }}
+          path: app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: error
+          retention-days: 90
 
   publish:
     needs: build
@@ -60,14 +92,19 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          fetch-depth: 0
           persist-credentials: false
       - name: Recheck approval
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: python3 scripts/release.py check --tag "$RELEASE_TAG" --require-approval
-      - name: Publish source release
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: verified-signed-release
+          path: signed-release
+      - name: Publish verified upstream-signed APK and source release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --notes-file fdroid/RELEASE_NOTES.md
+        run: gh release create "$RELEASE_TAG" signed-release/*.apk signed-release/*.sha256 --verify-tag --title "$RELEASE_TAG" --notes-file fdroid/RELEASE_NOTES.md

@@ -1,0 +1,32 @@
+# REVIEW TEMPLATE ONLY. Render after approval, signing-key setup and immutable tag.
+Categories:
+  - Phone & SMS
+License: MIT
+AuthorName: SMS Forwarder contributors
+SourceCode: https://github.com/twkevinzhang/sms-forwarder
+IssueTracker: https://github.com/twkevinzhang/sms-forwarder/issues
+Changelog: https://github.com/twkevinzhang/sms-forwarder/releases
+
+AutoName: SMS Forwarder
+
+RepoType: git
+Repo: https://github.com/twkevinzhang/sms-forwarder.git
+Binaries: https://github.com/twkevinzhang/sms-forwarder/releases/download/v%v/com.twkevinzhang.smsforwarder_%c.apk
+
+Builds:
+  - versionName: '@VERSION_NAME@'
+    versionCode: @VERSION_CODE@
+    commit: '@SOURCE_SHA@'
+    subdir: app
+    gradle:
+      - yes
+    prebuild: python3 ../scripts/release.py check --tag 'v$$VERSION$$' --check-main
+      --require-approval
+
+AllowedAPKSigningKeys:
+  - '@CERT_SHA256@'
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$
+CurrentVersion: '@VERSION_NAME@'
+CurrentVersionCode: @VERSION_CODE@
