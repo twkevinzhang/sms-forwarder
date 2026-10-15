@@ -7,13 +7,13 @@ signing key or GitLab token is required by these GitHub workflows.
 
 ## Current state
 
-The owner has approved the listing text. Final screenshots and the initial
-recipe remain in preparation; no release tag or F-Droid submission has been
-created. Main-branch GitHub CI has passed. Final asset approval is required
-before publication. See `DEPENDENCY_REVIEW.md` for the dependency inventory
-and local scanner results. The local
-recipe is not yet proof of an accepted F-Droid build: run its checks in the
-official build environment before submission.
+The owner authorized final asset review, release and initial submission.
+The listing includes reviewed English and Traditional Chinese text, original
+icons and real screenshots with a fictional example number. The version and
+asset digest are recorded in `.github/store-listing-approval.json`.
+See `DEPENDENCY_REVIEW.md` for the dependency inventory and local scanner
+results. Official build/submission status must be verified independently;
+these files alone do not prove F-Droid acceptance.
 
 ## CI and tag releases
 

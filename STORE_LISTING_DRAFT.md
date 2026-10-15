@@ -1,11 +1,10 @@
-# Store listing — draft, not approved
+# Store listing review
 
-The repository owner has approved the English and Traditional Chinese text
-under `fastlane/metadata/android/`. Final screenshots and the complete listing
-still require review. Do not publish a release or submit this recipe for
-inclusion until the final assets are approved.
+The owner authorized final asset review, release and F-Droid submission.
+English and Traditional Chinese text, icons and screenshots have been reviewed
+under that authorization for version 1.0.0.
 
-## Proposed listing
+## Listing
 
 | Field | English | Traditional Chinese |
 | --- | --- | --- |
@@ -14,35 +13,26 @@ inclusion until the final assets are approved.
 | License | MIT | MIT |
 | Support | GitHub Issues | GitHub Issues |
 
-Read `full_description.txt` and `changelogs/1.txt` in both locales for the
-complete proposed public text. The descriptions include permissions, mobile
-operator charges, forwarding limits, background restrictions, privacy and
-unsupported message types. They make no device-specific validation claims.
+Complete descriptions and changelogs are under
+`fastlane/metadata/android/{en-US,zh-TW}`. They describe permissions, SMS
+charges, sending limits, background restrictions, privacy and unsupported
+message types without device-specific validation claims.
 
-## Screenshots still required
+## Visual assets
 
-No private device screenshots are reused. Before approval, capture at least
-two actual screenshots of the final UI with fictional numbers and messages:
+Each locale contains an original MIT-licensed icon and two unmodified real UI
+screenshots: saved settings with automatic forwarding disabled, and background
+limitations with empty activity history. Only the fictional example number
+`+1 202-555-0123` is shown. Images were visually reviewed and have no textual
+or EXIF metadata. No successful SMS delivery is simulated or claimed.
 
-1. SIM selectors, destination, enable switch and saved settings.
-2. Test action and status history, using fictional sample messages.
-
-Place PNG files in `en-US/images/phoneScreenshots/` beneath the metadata root;
-localized screenshots may also be added under `zh-TW`. Review status bars,
-notifications and image metadata before committing. The original MIT-licensed store icon is in each locale's `images/icon.png`;
-its vector source is `artwork/icon.svg`. The adaptive launcher icon uses the
-same artwork. Final visual approval includes these icons.
+The icon source is `artwork/icon.svg`; the adaptive launcher uses matching
+original vector artwork. Third-party dependency licensing is documented in
+`fdroid/DEPENDENCY_REVIEW.md` and included in the APK under `assets/licenses`.
 
 ## Approval record
 
-`.github/store-listing-approval.json` intentionally starts with `approved:
-false`. After the owner explicitly approves the final text and screenshots:
-
-1. Run `python3 scripts/release.py digest`.
-2. Record the digest in `listingSha256`, set the matching `version`, and
-   change `approved` to `true` in a reviewed commit on `main`.
-3. Re-run `python3 scripts/release.py check --require-approval`.
-
-Changing a listing file, screenshot, changelog, launcher icon or release version invalidates
-approval. Never approve on behalf of the owner or bypass the checks in CI or
-the F-Droid build recipe.
+`.github/store-listing-approval.json` pins version 1.0.0 and the exact digest of
+listing files, screenshots and launcher icons. A subsequent change to those
+assets or the release version invalidates approval. Obtain renewed owner
+approval or explicit delegated authorization before recording a new digest.
